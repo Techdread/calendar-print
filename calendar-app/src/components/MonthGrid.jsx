@@ -6,9 +6,7 @@ import {
   Box,
   IconButton,
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
   Button
 } from '@mui/material';
 import { format, isSameDay, isToday } from 'date-fns';
@@ -28,8 +26,10 @@ const MonthGrid = ({ month, year }) => {
     setOpenDialog(false);
   };
 
+  const daysInMonth = new Date(year, month.monthIndex + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month.monthIndex, 1).getDay();
   const emptyDays = Array(firstDayOfMonth).fill(null);
+  const monthDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   return (
     <Box 
@@ -60,14 +60,19 @@ const MonthGrid = ({ month, year }) => {
 
       {currentImage ? (
         <Box 
+          component="img"
+          src={currentImage}
           sx={{ 
             flex: 1,
             mb: 4,
-            backgroundImage: `url(${currentImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            width: '100%',
+            height: '180mm',
+            objectFit: 'cover',
             borderRadius: 1,
-            minHeight: '180mm',
+            '@media print': {
+              height: '180mm',
+              pageBreakInside: 'avoid',
+            }
           }} 
         />
       ) : (
@@ -88,61 +93,80 @@ const MonthGrid = ({ month, year }) => {
           }}
           onClick={() => setOpenDialog(true)}
         >
-          <Typography color="textSecondary">Click to add image</Typography>
+          <Typography variant="body2" color="textSecondary">Click to add image</Typography>
         </Box>
       )}
 
       <Box sx={{ mt: 'auto' }}>
-        <Grid container spacing={0.5} sx={{ 
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          borderRadius: 1,
-          p: 2,
-        }}>
-          {weekDays.map(day => (
-            <Grid item xs={12/7} key={day}>
-              <Typography 
-                variant="subtitle2" 
-                align="center" 
-                sx={{ fontWeight: 'bold' }}
-              >
+        <Grid 
+          container 
+          spacing={1}
+          sx={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderRadius: 1,
+            p: 2,
+            '@media print': {
+              backgroundColor: 'transparent',
+            }
+          }}
+        >
+          {weekDays.map((day, index) => (
+            <Grid item xs={1.7} key={day}>
+              <Typography align="center" sx={{ fontWeight: 'bold' }}>
                 {day}
               </Typography>
             </Grid>
           ))}
           
           {emptyDays.map((_, index) => (
-            <Grid item xs={12/7} key={`empty-${index}`}>
-              <Box sx={{ pt: '60%' }} />
+            <Grid item xs={1.7} key={`empty-${index}`}>
+              <Box 
+                sx={{ 
+                  height: '40px',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                }} 
+              />
             </Grid>
           ))}
-
-          {month.days.map(date => (
-            <Grid item xs={12/7} key={date.toString()}>
-              <Box
-                sx={{
-                  pt: '60%',
-                  position: 'relative',
-                  bgcolor: isToday(date) ? 'primary.light' : 'transparent',
-                  borderRadius: 1,
-                  border: '1px solid',
-                  borderColor: 'grey.200',
-                }}
-              >
-                <Typography
-                  variant="body1"
+          
+          {monthDays.map(day => {
+            const date = new Date(year, month.monthIndex, day);
+            const isCurrentDay = isToday(date);
+            
+            return (
+              <Grid item xs={1.7} key={day}>
+                <Box
                   sx={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    fontWeight: isToday(date) ? 'bold' : 'normal',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: isCurrentDay ? 'primary.main' : 'transparent',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    '@media print': {
+                      backgroundColor: isCurrentDay ? 'action.hover' : 'transparent',
+                    }
                   }}
                 >
-                  {format(date, 'd')}
-                </Typography>
-              </Box>
-            </Grid>
-          ))}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: isCurrentDay ? 'primary.contrastText' : 'text.primary',
+                      '@media print': {
+                        color: 'text.primary',
+                      }
+                    }}
+                  >
+                    {day}
+                  </Typography>
+                </Box>
+              </Grid>
+            );
+          })}
         </Grid>
       </Box>
 
@@ -152,13 +176,16 @@ const MonthGrid = ({ month, year }) => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Upload Image for {month.name}</DialogTitle>
         <DialogContent>
-          <ImageUpload onImageUpload={handleImageUpload} />
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+            <ImageUpload onImageUpload={handleImageUpload} />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button onClick={() => setOpenDialog(false)} color="primary">
+                Cancel
+              </Button>
+            </Box>
+          </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-        </DialogActions>
       </Dialog>
     </Box>
   );
